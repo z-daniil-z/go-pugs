@@ -1,4 +1,4 @@
-module gohound
+module go-pugs
 
 go 1.14
 

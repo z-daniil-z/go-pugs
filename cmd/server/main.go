@@ -1,18 +1,25 @@
 package main
 
 import (
-	"gohound/internal/app"
+	"fmt"
+	"go-pugs/config"
+	"go-pugs/internal/app"
 	"log"
 	"net/http"
 	"time"
 )
 
 func main() {
+	conf, err := config.GetConfig()
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	api := app.NewAPI()
 
 	srv := &http.Server{
 		Handler: api.Router(),
-		Addr:    "127.0.0.1:8000",
+		Addr:    fmt.Sprintf("%s:%s", conf.Ip, conf.Port),
 		// Good practice: enforce timeouts for servers you create!
 		WriteTimeout: 15 * time.Second,
 		ReadTimeout:  15 * time.Second,
