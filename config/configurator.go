@@ -2,14 +2,24 @@ package config
 
 import (
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"log"
 	"os"
 )
 
 type Config struct {
-	Ip   string `json:"ip"`
-	Port string `json:"port"`
+	Ip       string   `json:"ip"`
+	Port     string   `json:"port"`
+	DataBase DataBase `json:"dataBase"`
+}
+
+type DataBase struct {
+	User     string `json:"user"`
+	Password string `json:"password"`
+	Ip       string `json:"ip"`
+	Port     string `json:"port"`
+	DbName   string `json:"dbName"`
 }
 
 func GetConfig() (*Config, error) {
@@ -27,7 +37,7 @@ func GetConfig() (*Config, error) {
 func (conf *Config) DebugConfig() error {
 	var path string
 	var in bool
-	if path, in = os.LookupEnv("PATH"); !in {
+	if path, in = os.LookupEnv("CONF_PATH"); !in {
 		log.Println("No path set. Default path is config/config.json")
 		path = "config/config.json"
 	}
@@ -42,16 +52,20 @@ func (conf *Config) DebugConfig() error {
 }
 
 func (conf *Config) ProdConfig() {
-	if ip, in := os.LookupEnv("IP"); in {
-		conf.Ip = ip
+	conf.Ip = lookArg("IP", "127.0.0.1")
+	conf.Port = lookArg("PORT", "8000")
+	conf.DataBase.User = lookArg("DB_USER", "postgres")
+	conf.DataBase.Password = lookArg("DB_PASSWORD", "postgres")
+	conf.DataBase.Ip = lookArg("DB_IP", "127.0.0.1")
+	conf.DataBase.Port = lookArg("DB_PORT", "5432")
+	conf.DataBase.DbName = lookArg("DB_NAME", "Pugs")
+}
+
+func lookArg(arg, def string) string {
+	if val, in := os.LookupEnv(arg); in {
+		return val
 	} else {
-		log.Println("No IP set. Default IP is 127.0.0.1")
-		conf.Ip = "127.0.0.1"
-	}
-	if port, in := os.LookupEnv("PORT"); in {
-		conf.Port = port
-	} else {
-		log.Println("No PORT set. Default PORT is 8000")
-		conf.Port = "8000"
+		log.Println(fmt.Sprintf("No %s set. Default %s is %s", arg, arg, def))
+		return def
 	}
 }
