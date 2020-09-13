@@ -1,27 +1,34 @@
 package app
 
 import (
-	"encoding/json"
 	"github.com/go-chi/chi"
+	"go-pugs/internal/app/search"
+	"go-pugs/internal/models"
 	"gorm.io/gorm"
-	"net/http"
 )
 
+type Router interface {
+	Router() *chi.Mux
+}
+
 type APP struct {
-	db *gorm.DB
+	db     *gorm.DB
+	search *search.API
 }
 
 func NewAPP(db *gorm.DB) (*APP, error) {
-	ret := &APP{db: db}
+	ret := &APP{
+		db:     db,
+		search: search.NewAPI(),
+	}
+	if err := db.AutoMigrate(models.Files{}); err != nil {
+		return nil, err
+	}
 	return ret, nil
 }
 
 func (app *APP) Router() *chi.Mux {
-	router := chi.NewRouter()
-	router.Get("/hello", func(w http.ResponseWriter, r *http.Request) {
-		if err := json.NewEncoder(w).Encode(map[string]bool{"ok": true}); err != nil {
-
-		}
-	})
-	return router
+	r := chi.NewRouter()
+	r.Mount("/search", app.search.Router())
+	return r
 }
