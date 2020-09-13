@@ -1,4 +1,4 @@
-package google
+package manager
 
 import (
 	"github.com/go-chi/chi"
@@ -8,15 +8,19 @@ import (
 )
 
 type API struct {
+	db          *gorm.DB
 	fileService models.FileService
 }
 
 func NewAPI(db *gorm.DB) *API {
-	return &API{fileService: postgres.NewFileService(db)}
+	return &API{
+		db:          db,
+		fileService: postgres.NewFileService(db),
+	}
 }
 
 func (api *API) Router() *chi.Mux {
 	r := chi.NewRouter()
-	r.Get("/", api.searchRequest)
+	r.Get("/file", api.getFile)
 	return r
 }
