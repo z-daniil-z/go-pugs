@@ -1,45 +1,118 @@
 package google
 
 import (
+	"fmt"
 	"go-pugs/internal/models"
 	"go-pugs/internal/tools/httpBuilder"
+	"go-pugs/internal/tools/validation"
 	"go-pugs/internal/tools/wrapper"
 	"net/http"
+	"net/url"
 	"regexp"
+	"strconv"
+	"strings"
 )
 
 func (api *API) searchRequest(w http.ResponseWriter, r *http.Request) {
-	req := httpBuilder.NewRequest()
-	req.Method = "GET"
-	req.Headers = map[string]string{
-		"User-Agent": `Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/79.0.3945.88 Safari/537.36`,
-	}
-	req.Url = "http://www.google.com/search"
-	req.Query = map[string]string{
-		"num":   "100",
-		"start": "0",
-		"hl":    "en",
-		"meta":  "",
-		"q":     "site:www.spbstu.ru filetype:pdf",
-	}
-
-	data, err := req.Do("")
+	sr := &SearchRequest{}
+	inter, err := validation.Parameters(r, sr)
 	if err != nil {
 		wrapper.ErrorResponse(w, err)
 		return
 	}
-	reg := regexp.MustCompile(`href="/url\?q=https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&//=]*)\.pdf`)
+	sr = inter.(*SearchRequest)
+
+	req := httpBuilder.NewRequest()
+	req.Method = "GET"
+	reg := regexp.MustCompile("[\n\t]*")
+	req.Headers = map[string]string{
+		"User-Agent": reg.ReplaceAllString(`Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML,
+			like Gecko) Chrome/79.0.3945.88 Safari/537.36`, ""),
+	}
+	req.Url = "http://www.google.com/search"
+
+	ret := make([]string, 0)
+
+	total, err := strconv.Atoi(sr.Count)
+	if err != nil {
+		wrapper.ErrorResponse(w, err)
+		return
+	}
+
+	for i := 0; i < total; i += 100 {
+		req.Query = map[string]string{
+			"num":   "100",
+			"start": strconv.FormatInt(int64(i), 10),
+			"hl":    "en",
+			"meta":  "",
+			"q":     fmt.Sprintf("site:%s filetype:%s", sr.WebSite, sr.DocType),
+		}
+		data, err := req.Do("")
+		if err != nil {
+			wrapper.ErrorResponse(w, err)
+			return
+		}
+		tmp, err := api.checkAdditionalLink(data, sr.DocType)
+		if err != nil {
+			wrapper.ErrorResponse(w, err)
+			return
+		}
+		if tmp != nil {
+			data = tmp
+		}
+		urls, err := api.findGoodUrls(data, sr.DocType)
+		if err != nil {
+			wrapper.ErrorResponse(w, err)
+			return
+		}
+		ret = append(ret, urls...)
+	}
+	wrapper.Response(w, ret)
+}
+
+func (api *API) checkAdditionalLink(data []byte, doctype string) ([]byte, error) {
+	reg := regexp.MustCompile("If you like, you can.*repeat the search with the omitted results included")
+	rawUrl := reg.FindAllString(string(data), -1)
+	if len(rawUrl) == 0 {
+		return nil, nil
+	}
+	split := strings.Split(rawUrl[0], `"`)
+	if len(split) != 9 {
+		return nil, ErrWrongParse
+	}
+	path := split[3][len(`/url?q=`):]
+	req := httpBuilder.NewRequest()
+	req.Method = "GET"
+	reg = regexp.MustCompile("[\n\t]*")
+	req.Headers = map[string]string{
+		"User-Agent": reg.ReplaceAllString(`Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML,
+			like Gecko) Chrome/79.0.3945.88 Safari/537.36`, ""),
+	}
+	path, err := url.QueryUnescape(path)
+	if err != nil {
+		return nil, err
+	}
+	req.Url = fmt.Sprintf("http://www.google.com%s", path)
+	data, err = req.Do("")
+	if err != nil {
+		return nil, err
+	}
+	return data, nil
+}
+
+func (api *API) findGoodUrls(data []byte, docType string) ([]string, error) {
+	reg := regexp.MustCompile("[\n\t]*")
+	reg = regexp.MustCompile(reg.ReplaceAllString(`href="/url\?q=https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}
+		\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&//=]*)\.`+docType, ""))
 	rawUrls := reg.FindAllString(string(data), -1)
 	for i := range rawUrls {
 		rawUrls[i] = rawUrls[i][len(`href="/url\?q=`)-1:]
 		if err := api.fileService.Insert(&models.File{
-			Type: "pdf",
+			Type: docType,
 			Url:  rawUrls[i],
 		}); err != nil {
-			wrapper.ErrorResponse(w, err)
-			return
+			return nil, err
 		}
 	}
-
-	wrapper.Response(w, rawUrls)
+	return rawUrls, nil
 }
