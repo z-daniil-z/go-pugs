@@ -2,6 +2,7 @@ package google
 
 import (
 	"fmt"
+	"go-pugs/internal/middleware"
 	"go-pugs/internal/models"
 	"go-pugs/internal/tools/httpBuilder"
 	"go-pugs/internal/tools/validation"
@@ -13,7 +14,8 @@ import (
 	"strings"
 )
 
-func (api *API) searchRequest(w http.ResponseWriter, r *http.Request) {
+func (api *API) searchRequest(ctx middleware.PugContext, w http.ResponseWriter, r *http.Request) {
+	fmt.Println(r.Context().Value("costum_key"))
 	sr := &SearchRequest{}
 	inter, err := validation.Parameters(r, sr)
 	if err != nil {
@@ -26,8 +28,7 @@ func (api *API) searchRequest(w http.ResponseWriter, r *http.Request) {
 	req.Method = "GET"
 	reg := regexp.MustCompile("[\n\t]*")
 	req.Headers = map[string]string{
-		"User-Agent": reg.ReplaceAllString(`Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML,
-			like Gecko) Chrome/79.0.3945.88 Safari/537.36`, ""),
+		"User-Agent": reg.ReplaceAllString(`Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:80.0) Gecko/20100101 Firefox/80.0`, ""),
 	}
 	req.Url = "http://www.google.com/search"
 
@@ -52,7 +53,11 @@ func (api *API) searchRequest(w http.ResponseWriter, r *http.Request) {
 			wrapper.ErrorResponse(w, err)
 			return
 		}
-		tmp, err := api.checkAdditionalLink(data, sr.DocType)
+		if err := api.checkBlock(data); err != nil {
+			wrapper.ErrorResponse(w, err)
+			return
+		}
+		tmp, err := api.checkAdditionalLink(data)
 		if err != nil {
 			wrapper.ErrorResponse(w, err)
 			return
@@ -70,7 +75,16 @@ func (api *API) searchRequest(w http.ResponseWriter, r *http.Request) {
 	wrapper.Response(w, ret)
 }
 
-func (api *API) checkAdditionalLink(data []byte, doctype string) ([]byte, error) {
+func (api API) checkBlock(data []byte) error {
+	reg := regexp.MustCompile("Our systems have detected unusual traffic from your computer network")
+	block := reg.Match(data)
+	if block {
+		return ErrBlock
+	}
+	return nil
+}
+
+func (api *API) checkAdditionalLink(data []byte) ([]byte, error) {
 	reg := regexp.MustCompile("If you like, you can.*repeat the search with the omitted results included")
 	rawUrl := reg.FindAllString(string(data), -1)
 	if len(rawUrl) == 0 {
@@ -85,8 +99,7 @@ func (api *API) checkAdditionalLink(data []byte, doctype string) ([]byte, error)
 	req.Method = "GET"
 	reg = regexp.MustCompile("[\n\t]*")
 	req.Headers = map[string]string{
-		"User-Agent": reg.ReplaceAllString(`Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML,
-			like Gecko) Chrome/79.0.3945.88 Safari/537.36`, ""),
+		"User-Agent": reg.ReplaceAllString(`Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:80.0) Gecko/20100101 Firefox/80.0`, ""),
 	}
 	path, err := url.QueryUnescape(path)
 	if err != nil {
@@ -95,6 +108,9 @@ func (api *API) checkAdditionalLink(data []byte, doctype string) ([]byte, error)
 	req.Url = fmt.Sprintf("http://www.google.com%s", path)
 	data, err = req.Do("")
 	if err != nil {
+		return nil, err
+	}
+	if err := api.checkBlock(data); err != nil {
 		return nil, err
 	}
 	return data, nil

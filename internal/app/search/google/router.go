@@ -3,6 +3,7 @@ package google
 import (
 	"github.com/go-chi/chi"
 	"go-pugs/internal/db/postgres"
+	"go-pugs/internal/middleware"
 	"go-pugs/internal/models"
 	"gorm.io/gorm"
 )
@@ -17,6 +18,6 @@ func NewAPI(db *gorm.DB) *API {
 
 func (api *API) Router() *chi.Mux {
 	r := chi.NewRouter()
-	r.Get("/", api.searchRequest)
+	r.Get("/", middleware.Context(api.searchRequest).ServeHTTP)
 	return r
 }

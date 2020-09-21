@@ -51,7 +51,15 @@ func (req *Req) Do(proxy string) ([]byte, error) {
 
 func (req *Req) setSocksProxy(addr string) (*http.Client, error) {
 	// create a socks5 dialer
-	dialer, err := proxy.SOCKS5("tcp", addr, nil, proxy.Direct)
+	u, err := url.Parse(addr)
+	if err != nil {
+		return nil, err
+	}
+	pwd, _ := u.User.Password()
+	dialer, err := proxy.SOCKS5("tcp", fmt.Sprintf("%s:%s", u.Hostname(), u.Port()), &proxy.Auth{
+		User:     u.User.Username(),
+		Password: pwd,
+	}, proxy.Direct)
 	if err != nil {
 		return nil, err
 	}

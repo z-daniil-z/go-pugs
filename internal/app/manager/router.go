@@ -8,13 +8,11 @@ import (
 )
 
 type API struct {
-	db          *gorm.DB
 	fileService models.FileService
 }
 
 func NewAPI(db *gorm.DB) *API {
 	return &API{
-		db:          db,
 		fileService: postgres.NewFileService(db),
 	}
 }
