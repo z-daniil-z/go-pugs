@@ -1,7 +1,6 @@
 package models
 
 import (
-	"gorm.io/gorm"
 	"time"
 )
 
@@ -11,13 +10,12 @@ type ProxyService interface {
 }
 
 type Proxy struct {
-	ID        uint           `json:"id" gorm:"primarykey"`
-	CreatedAt time.Time      `json:"createdAt"`
-	UpdatedAt time.Time      `json:"updatedAt"`
-	DeletedAt gorm.DeletedAt `json:"deletedAt" gorm:"index"`
-	Protocol  string         `json:"protocol"`
-	Host      string         `json:"host" gorm:"unique"`
-	Port      string         `json:"port"`
-	Username  string         `json:"username"`
-	Password  string         `json:"password"`
+	ID        uint      `json:"id" gorm:"primarykey"`
+	CreatedAt time.Time `json:"createdAt"`
+	UpdatedAt time.Time `json:"updatedAt"`
+	Protocol  string    `json:"protocol"`
+	Host      string    `json:"host" gorm:"unique"`
+	Port      string    `json:"port"`
+	Username  string    `json:"username"`
+	Password  string    `json:"password"`
 }

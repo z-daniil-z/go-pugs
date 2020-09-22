@@ -1,7 +1,6 @@
 package models
 
 import (
-	"gorm.io/gorm"
 	"time"
 )
 
@@ -11,10 +10,9 @@ type UseragentService interface {
 }
 
 type Useragent struct {
-	ID        uint           `json:"id" gorm:"primarykey"`
-	CreatedAt time.Time      `json:"createdAt"`
-	UpdatedAt time.Time      `json:"updatedAt"`
-	DeletedAt gorm.DeletedAt `json:"deletedAt" gorm:"index"`
-	Useragent string         `json:"useragent" gorm:"unique"`
-	Device    string         `json:"device"`
+	ID        uint      `json:"id" gorm:"primarykey"`
+	CreatedAt time.Time `json:"createdAt"`
+	UpdatedAt time.Time `json:"updatedAt"`
+	Useragent string    `json:"useragent" gorm:"unique"`
+	Device    string    `json:"device"`
 }
