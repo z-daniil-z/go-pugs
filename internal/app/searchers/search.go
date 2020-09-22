@@ -1,9 +1,9 @@
-package search
+package searchers
 
 import (
 	"github.com/go-chi/chi"
-	"go-pugs/internal/app/search/duckduckgo"
-	"go-pugs/internal/app/search/google"
+	"go-pugs/internal/app/searchers/duckduckgo"
+	"go-pugs/internal/app/searchers/google"
 	"go-pugs/internal/middleware"
 	"go-pugs/internal/usecases"
 	"gorm.io/gorm"

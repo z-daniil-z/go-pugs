@@ -4,11 +4,11 @@ import (
 	"fmt"
 	"go-pugs/internal/middleware"
 	"go-pugs/internal/models"
-	"go-pugs/internal/pkg/errors"
+	errors "go-pugs/internal/pkg/errors/searchers"
+	"go-pugs/internal/pkg/requests/searchers"
 	"go-pugs/internal/pkg/tools/httpBuilder"
 	"go-pugs/internal/pkg/tools/validation"
 	"go-pugs/internal/pkg/tools/wrapper"
-	val "go-pugs/internal/pkg/validation"
 	"net/http"
 	"net/url"
 	"regexp"
@@ -18,13 +18,13 @@ import (
 
 func (api *API) SearchRequest(ctx middleware.PugContext, w http.ResponseWriter, r *http.Request) {
 	fmt.Println(r.Context().Value("costum_key"))
-	sr := &val.Request{}
+	sr := &searchers.Request{}
 	inter, err := validation.Parameters(r, sr)
 	if err != nil {
 		wrapper.ErrorResponse(w, err)
 		return
 	}
-	sr = inter.(*val.Request)
+	sr = inter.(*searchers.Request)
 
 	req := httpBuilder.NewRequest()
 	req.Method = "GET"

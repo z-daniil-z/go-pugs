@@ -2,9 +2,9 @@ package app
 
 import (
 	"github.com/go-chi/chi"
-	"go-pugs/internal/app/board"
+	"go-pugs/internal/app/boards"
 	"go-pugs/internal/app/manager"
-	"go-pugs/internal/app/search"
+	"go-pugs/internal/app/searchers"
 	"go-pugs/internal/middleware"
 	"go-pugs/internal/models"
 	"gorm.io/gorm"
@@ -22,11 +22,11 @@ type APP struct {
 
 func NewAPP(db *gorm.DB) (*APP, error) {
 	ret := &APP{
-		search:  search.NewAPI(db),
+		search:  searchers.NewAPI(db),
 		manager: manager.NewAPI(db),
-		board:   board.NewAPI(db),
+		board:   boards.NewAPI(db),
 	}
-	if err := db.AutoMigrate(models.File{}, models.Useragent{}, models.Proxy{}); err != nil {
+	if err := db.AutoMigrate(models.File{}, models.Useragent{}, models.Proxy{}, models.Seller{}, models.Promo{}); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -36,8 +36,8 @@ func (app *APP) Router() *chi.Mux {
 	r := chi.NewRouter()
 	r.Use(middleware.Middleware)
 
-	r.Mount("/search", app.search.Router())
+	r.Mount("/searchers", app.search.Router())
 	r.Mount("/manager", app.manager.Router())
-	r.Mount("/board", app.board.Router())
+	r.Mount("/boards", app.board.Router())
 	return r
 }
