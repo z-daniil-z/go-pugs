@@ -2,7 +2,7 @@ package validation
 
 import (
 	"encoding/json"
-	"go-pugs/internal/tools/validation/const"
+	"go-pugs/internal/pkg/tools/validation/const"
 	"net/http"
 	"reflect"
 )

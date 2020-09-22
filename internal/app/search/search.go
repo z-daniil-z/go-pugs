@@ -2,6 +2,7 @@ package search
 
 import (
 	"github.com/go-chi/chi"
+	"go-pugs/internal/app/search/duckduckgo"
 	"go-pugs/internal/app/search/google"
 	"go-pugs/internal/middleware"
 	"go-pugs/internal/usecases"
@@ -9,16 +10,18 @@ import (
 )
 
 type API struct {
-	google *google.API
+	google     usecases.Search
+	duckDuckGo usecases.Search
 }
 
 func NewAPI(db *gorm.DB) *API {
-	return &API{google: google.NewAPI(db)}
+	return &API{google: google.NewAPI(db), duckDuckGo: duckduckgo.NewAPI(db)}
 }
 
 func (api *API) Router() *chi.Mux {
 	r := chi.NewRouter()
 	r.Mount("/google", api.Mount(api.google))
+	r.Mount("/duckduckgo", api.Mount(api.duckDuckGo))
 	return r
 }
 

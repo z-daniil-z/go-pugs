@@ -2,12 +2,13 @@ package google
 
 import (
 	"fmt"
-	"go-pugs/internal/app/search"
 	"go-pugs/internal/middleware"
 	"go-pugs/internal/models"
-	"go-pugs/internal/tools/httpBuilder"
-	"go-pugs/internal/tools/validation"
-	"go-pugs/internal/tools/wrapper"
+	"go-pugs/internal/pkg/errors"
+	"go-pugs/internal/pkg/tools/httpBuilder"
+	"go-pugs/internal/pkg/tools/validation"
+	"go-pugs/internal/pkg/tools/wrapper"
+	val "go-pugs/internal/pkg/validation"
 	"net/http"
 	"net/url"
 	"regexp"
@@ -17,13 +18,13 @@ import (
 
 func (api *API) SearchRequest(ctx middleware.PugContext, w http.ResponseWriter, r *http.Request) {
 	fmt.Println(r.Context().Value("costum_key"))
-	sr := &search.Request{}
+	sr := &val.Request{}
 	inter, err := validation.Parameters(r, sr)
 	if err != nil {
 		wrapper.ErrorResponse(w, err)
 		return
 	}
-	sr = inter.(*search.Request)
+	sr = inter.(*val.Request)
 
 	req := httpBuilder.NewRequest()
 	req.Method = "GET"
@@ -80,7 +81,7 @@ func (api API) checkBlock(data []byte) error {
 	reg := regexp.MustCompile("Our systems have detected unusual traffic from your computer network")
 	block := reg.Match(data)
 	if block {
-		return search.ErrBlock
+		return errors.ErrBlock
 	}
 	return nil
 }
@@ -93,7 +94,7 @@ func (api *API) checkAdditionalLink(data []byte) ([]byte, error) {
 	}
 	split := strings.Split(rawUrl[0], `"`)
 	if len(split) != 9 {
-		return nil, search.ErrWrongParse
+		return nil, errors.ErrWrongParse
 	}
 	path := split[3][len(`/url?q=`):]
 	req := httpBuilder.NewRequest()

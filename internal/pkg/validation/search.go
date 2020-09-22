@@ -1,4 +1,4 @@
-package search
+package validation
 
 type Request struct {
 	WebSite string `from:"query" json:"site"`

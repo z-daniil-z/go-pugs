@@ -2,8 +2,8 @@ package manager
 
 import (
 	"go-pugs/internal/models"
-	"go-pugs/internal/tools/httpBuilder"
-	"go-pugs/internal/tools/wrapper"
+	"go-pugs/internal/pkg/tools/httpBuilder"
+	"go-pugs/internal/pkg/tools/wrapper"
 	"net/http"
 )
 
