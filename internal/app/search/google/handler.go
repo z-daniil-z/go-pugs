@@ -2,6 +2,7 @@ package google
 
 import (
 	"fmt"
+	"go-pugs/internal/app/search"
 	"go-pugs/internal/middleware"
 	"go-pugs/internal/models"
 	"go-pugs/internal/tools/httpBuilder"
@@ -14,15 +15,15 @@ import (
 	"strings"
 )
 
-func (api *API) searchRequest(ctx middleware.PugContext, w http.ResponseWriter, r *http.Request) {
+func (api *API) SearchRequest(ctx middleware.PugContext, w http.ResponseWriter, r *http.Request) {
 	fmt.Println(r.Context().Value("costum_key"))
-	sr := &SearchRequest{}
+	sr := &search.Request{}
 	inter, err := validation.Parameters(r, sr)
 	if err != nil {
 		wrapper.ErrorResponse(w, err)
 		return
 	}
-	sr = inter.(*SearchRequest)
+	sr = inter.(*search.Request)
 
 	req := httpBuilder.NewRequest()
 	req.Method = "GET"
@@ -79,7 +80,7 @@ func (api API) checkBlock(data []byte) error {
 	reg := regexp.MustCompile("Our systems have detected unusual traffic from your computer network")
 	block := reg.Match(data)
 	if block {
-		return ErrBlock
+		return search.ErrBlock
 	}
 	return nil
 }
@@ -92,7 +93,7 @@ func (api *API) checkAdditionalLink(data []byte) ([]byte, error) {
 	}
 	split := strings.Split(rawUrl[0], `"`)
 	if len(split) != 9 {
-		return nil, ErrWrongParse
+		return nil, search.ErrWrongParse
 	}
 	path := split[3][len(`/url?q=`):]
 	req := httpBuilder.NewRequest()
@@ -123,7 +124,7 @@ func (api *API) findGoodUrls(data []byte, docType string) ([]string, error) {
 	rawUrls := reg.FindAllString(string(data), -1)
 	for i := range rawUrls {
 		rawUrls[i] = rawUrls[i][len(`href="/url\?q=`)-1:]
-		if err := api.fileService.Insert(&models.File{
+		if err := api.fileService.InsertOrUpdate(&models.File{
 			Type: docType,
 			Url:  rawUrls[i],
 		}); err != nil {

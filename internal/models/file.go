@@ -6,8 +6,8 @@ import (
 )
 
 type FileService interface {
-	Insert(*File) error
 	Select(*File) error
+	InsertOrUpdate(*File) error
 }
 
 type File struct {

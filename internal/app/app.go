@@ -9,23 +9,21 @@ import (
 	"gorm.io/gorm"
 )
 
-type Router interface {
+type API interface {
 	Router() *chi.Mux
 }
 
 type APP struct {
-	db      *gorm.DB
-	search  *search.API
-	manager *manager.API
+	search  API
+	manager API
 }
 
 func NewAPP(db *gorm.DB) (*APP, error) {
 	ret := &APP{
-		db:      db,
 		search:  search.NewAPI(db),
 		manager: manager.NewAPI(db),
 	}
-	if err := db.AutoMigrate(models.File{}); err != nil {
+	if err := db.AutoMigrate(models.File{}, models.Useragent{}, models.Proxy{}); err != nil {
 		return nil, err
 	}
 	return ret, nil

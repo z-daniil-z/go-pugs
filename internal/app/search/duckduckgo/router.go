@@ -1,4 +1,4 @@
-package google
+package duckduckgo
 
 import (
 	"go-pugs/internal/db/postgres"
