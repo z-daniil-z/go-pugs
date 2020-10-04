@@ -16,7 +16,7 @@ func NewFileService(db *gorm.DB) *FileService {
 
 func (s *FileService) InsertOrUpdate(file *models.File) error {
 	if err := s.db.Model(file).Where("url=?", file.Url).First(file).Error; err != nil {
-		if err != gorm.ErrRecordNotFound {
+		if err == gorm.ErrRecordNotFound {
 			if err := s.db.Create(file).Error; err != nil {
 				return err
 			}

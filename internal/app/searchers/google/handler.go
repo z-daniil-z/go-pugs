@@ -30,7 +30,7 @@ func (api *API) SearchRequest(ctx middleware.PugContext, w http.ResponseWriter, 
 	req.Method = "GET"
 	reg := regexp.MustCompile("[\n\t]*")
 	req.Headers = map[string]string{
-		"User-Agent": reg.ReplaceAllString(`Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:80.0) Gecko/20100101 Firefox/80.0`, ""),
+		"User-Agent": reg.ReplaceAllString(`Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36`, ""),
 	}
 	req.Url = "http://www.google.com/search"
 
@@ -50,7 +50,7 @@ func (api *API) SearchRequest(ctx middleware.PugContext, w http.ResponseWriter, 
 			"meta":  "",
 			"q":     fmt.Sprintf("site:%s filetype:%s", sr.WebSite, sr.DocType),
 		}
-		data, err := req.Do("")
+		data, err := req.Do("socks5://AXTxrh:HpTUvR@45.133.225.28:8000")
 		if err != nil {
 			wrapper.ErrorResponse(w, err)
 			return
@@ -101,14 +101,14 @@ func (api *API) checkAdditionalLink(data []byte) ([]byte, error) {
 	req.Method = "GET"
 	reg = regexp.MustCompile("[\n\t]*")
 	req.Headers = map[string]string{
-		"User-Agent": reg.ReplaceAllString(`Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:80.0) Gecko/20100101 Firefox/80.0`, ""),
+		"User-Agent": reg.ReplaceAllString(`Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36`, ""),
 	}
 	path, err := url.QueryUnescape(path)
 	if err != nil {
 		return nil, err
 	}
 	req.Url = fmt.Sprintf("http://www.google.com%s", path)
-	data, err = req.Do("")
+	data, err = req.Do("socks5://AXTxrh:HpTUvR@45.133.225.28:8000")
 	if err != nil {
 		return nil, err
 	}
